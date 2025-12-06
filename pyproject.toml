@@ -20,7 +20,6 @@ dashscope = "^1.23.4"
 tugraphclient = "^2.0"
 openai = "==2.9.0"
 
-
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"

@@ -22,11 +22,11 @@ openai = "==2.9.0"
 
 [[tool.poetry.source]]
 name = "PyPI"
-priority = "supplemental"
+priority = "primary"
 
 [[tool.poetry.source]]
 name = "aliyun"
-priority = "primary"
+priority = "supplemental"
 url = "https://mirrors.aliyun.com/pypi/simple/"
 
 [build-system]

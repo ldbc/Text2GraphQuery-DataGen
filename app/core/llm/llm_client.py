@@ -1,13 +1,16 @@
+import os
 from http import HTTPStatus
 import random
 
 from dashscope import Generation
+from openai import OpenAI, OpenAIError
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class LlmClient:
-    def __init__(self, model="", model_path=""):
+    def __init__(self, model="", model_path="",platform=""):
+        self.platform = platform
         self.model = model
         self.model_path = model_path
         self.current_device = None
@@ -30,6 +33,8 @@ class LlmClient:
         return output
 
     def call_with_messages_online(self, messages):
+        if self.platform == "openai":
+            return self.call_with_messages_online_for_openai(messages)
         response = Generation.call(
             model=self.model,
             messages=messages,
@@ -77,6 +82,20 @@ class LlmClient:
         )
 
         return output
+
+    def call_with_messages_online_for_openai(self, messages):
+        try:
+            openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            response = openai_client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0,
+                max_tokens=200
+            )
+            return response.choices[0].message.content
+        except OpenAIError as e:
+            print("Failed!", messages[1]["content"])
+
 
 
 if __name__ == "__main__":

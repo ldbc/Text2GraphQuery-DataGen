@@ -1,0 +1,6 @@
+USER_id,age,gender,occupation,zip_code,registration_date
+2,23,F,actor,42337,2025-07-15
+3,24,F,director,42338,2025-07-15
+7,25,M,actor,42337,2025-08-15
+8,23,M,actor,42337,2025-08-15
+10,22,F,director,42337,2025-08-15

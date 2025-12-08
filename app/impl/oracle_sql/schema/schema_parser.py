@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Dict, List, Optional
+
 from app.core.schema.schema_graph import SchemaGraph
 from app.core.schema.schema_parser import SchemaParser
 
@@ -10,6 +13,15 @@ TYPE_MAP = {
     "STRING":   "VARCHAR2(4000)",
     "DATETIME": "TIMESTAMP",
     "BOOL":     "BOOLEAN",
+}
+
+SQLLDR_TYPE_MAP = {
+    "INT64": "INTEGER EXTERNAL",
+    "INT32": "INTEGER EXTERNAL",
+    "FLOAT": "DECIMAL EXTERNAL",
+    "STRING": "CHAR",
+    "DATETIME": "TIMESTAMP \"YYYY-MM-DD\"",
+    "BOOL": "CHAR",
 }
 
 VERTEX_TABLE_SUFFIX = "VTX"
@@ -56,7 +68,7 @@ class OracleSchemaParser(SchemaParser):
       src_label, dst_label = constraints
       src_col = self.enquote_identifier(f"src_{src_label}_id")
       dst_col = self.enquote_identifier(f"dst_{dst_label}_id")
-      lines.append(f"{self.enquote_identifier("id")} NUMBER(19) GENERATED ALWAYS AS IDENTITY PRIMARY KEY")
+      lines.append(f"{self.enquote_identifier('id')} NUMBER(19) GENERATED ALWAYS AS IDENTITY PRIMARY KEY")
       lines.append(f"{src_col} NUMBER(19) NOT NULL")
       lines.append(f"{dst_col} NUMBER(19) NOT NULL")
       for col in self.table_columns(props, None):
@@ -92,7 +104,7 @@ class OracleSchemaParser(SchemaParser):
       dst_tab = self.enquote_identifier(f"{dst_label}_{VERTEX_TABLE_SUFFIX}")
       dst_tab_col = self.enquote_identifier(f"{dst_label}_id")
       return (f"{table_name} "
-        f"KEY ({self.enquote_identifier("id")}) "
+        f"KEY ({self.enquote_identifier('id')}) "
         f"SOURCE KEY ({src_col}) REFERENCES {src_tab} ({src_tab_col}) "
         f"DESTINATION KEY ({dst_col}) REFERENCES {dst_tab} ({dst_tab_col}) "
         f"{self.create_label_and_props(label, props)}")
@@ -155,3 +167,125 @@ class OracleSchemaParser(SchemaParser):
             f.write("\n")
 
         return str(file_path)
+
+    def _sqlldr_column(self, prop: Dict[str, str]) -> str:
+        name = self.enquote_identifier(prop["name"])
+        loader_type = SQLLDR_TYPE_MAP.get(prop.get("type", ""), "CHAR")
+        return f"{name} {loader_type} NULLIF {name}=BLANKS"
+
+    def _write_control_file(self, control_path: Path, table_identifier: str, csv_file: Path, columns: List[str]):
+        control_path.parent.mkdir(parents=True, exist_ok=True)
+        content_lines = [
+            "OPTIONS (SKIP=1)",
+            "LOAD DATA",
+            f"INFILE \"{csv_file}\"",
+            "APPEND",
+            f"INTO TABLE {table_identifier}",
+            "FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"'",
+            "TRAILING NULLCOLS",
+            "(",
+        ]
+        for idx, column in enumerate(columns):
+            suffix = "," if idx < len(columns) - 1 else ""
+            content_lines.append(f"  {column}{suffix}")
+        content_lines.append(")")
+
+        control_path.write_text("\n".join(content_lines) + "\n", encoding="utf-8")
+
+    def _format_sqlldr_command(self, credentials: str, control_file: Path, log_file: Path, bad_file: Path) -> str:
+        return (
+            f"sqlldr {credentials} "
+            f"control={control_file} "
+            f"log={log_file} "
+            f"bad={bad_file}"
+        )
+
+    def generate_sqlldr_control_files(
+        self,
+        schema_graph: SchemaGraph,
+        csv_dir: Path,
+        control_dir: Path,
+        *,
+        credentials: str = "<user>/<password>@<connect_string>",
+        log_dir: Optional[Path] = None,
+        bad_dir: Optional[Path] = None,
+    ) -> List[Dict[str, str]]:
+        """Generate SQL*Loader control files and corresponding commands.
+
+        Args:
+            schema_graph: SchemaGraph used to create the tables.
+            csv_dir: Directory containing CSV files for load.
+            control_dir: Directory where control files will be written.
+            credentials: Placeholder credential string for the load commands.
+            log_dir: Optional directory for SQL*Loader log files.
+            bad_dir: Optional directory for SQL*Loader bad files.
+
+        Returns:
+            A list of metadata dictionaries, each containing table, control file,
+            csv file, log file, bad file and the generated sqlldr command.
+        """
+
+        csv_dir = Path(csv_dir)
+        control_dir = Path(control_dir)
+        control_dir.mkdir(parents=True, exist_ok=True)
+        log_directory = Path(log_dir) if log_dir else control_dir / "logs"
+        bad_directory = Path(bad_dir) if bad_dir else control_dir / "bad"
+        log_directory.mkdir(parents=True, exist_ok=True)
+        bad_directory.mkdir(parents=True, exist_ok=True)
+
+        load_instructions: List[Dict[str, str]] = []
+
+        for label, node in schema_graph.node_dict.items():
+            table_name = f"{label}_{VERTEX_TABLE_SUFFIX}"
+            table_identifier = self.enquote_identifier(table_name)
+            csv_file = csv_dir / f"{table_name}.csv"
+            control_path = control_dir / f"{table_name}.ctl"
+
+            columns = [self._sqlldr_column(prop) for prop in node.properties]
+            self._write_control_file(control_path, table_identifier, csv_file, columns)
+
+            log_path = log_directory / f"{table_name}.log"
+            bad_path = bad_directory / f"{table_name}.bad"
+            command = self._format_sqlldr_command(credentials, control_path, log_path, bad_path)
+
+            load_instructions.append(
+                {
+                    "table": table_identifier,
+                    "csv_file": str(csv_file),
+                    "control_file": str(control_path),
+                    "log_file": str(log_path),
+                    "bad_file": str(bad_path),
+                    "command": command,
+                }
+            )
+
+        for label, edge in schema_graph.edge_dict.items():
+            for src_label, dst_label in edge.src_dst_list:
+                table_name = f"{label}_{src_label}_{dst_label}_{EDGE_TABLE_SUFFIX}"
+                table_identifier = self.enquote_identifier(table_name)
+                csv_file = csv_dir / f"{table_name}.csv"
+                control_path = control_dir / f"{table_name}.ctl"
+
+                columns = [
+                    f"{self.enquote_identifier(f'src_{src_label}_id')} INTEGER EXTERNAL NULLIF {self.enquote_identifier(f'src_{src_label}_id')}=BLANKS",
+                    f"{self.enquote_identifier(f'dst_{dst_label}_id')} INTEGER EXTERNAL NULLIF {self.enquote_identifier(f'dst_{dst_label}_id')}=BLANKS",
+                ]
+                columns.extend(self._sqlldr_column(prop) for prop in edge.properties)
+                self._write_control_file(control_path, table_identifier, csv_file, columns)
+
+                log_path = log_directory / f"{table_name}.log"
+                bad_path = bad_directory / f"{table_name}.bad"
+                command = self._format_sqlldr_command(credentials, control_path, log_path, bad_path)
+
+                load_instructions.append(
+                    {
+                        "table": table_identifier,
+                        "csv_file": str(csv_file),
+                        "control_file": str(control_path),
+                        "log_file": str(log_path),
+                        "bad_file": str(bad_path),
+                        "command": command,
+                    }
+                )
+
+        return load_instructions

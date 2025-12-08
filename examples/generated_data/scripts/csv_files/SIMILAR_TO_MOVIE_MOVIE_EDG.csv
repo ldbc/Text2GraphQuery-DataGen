@@ -1,0 +1,2 @@
+src_MOVIE_id,dst_MOVIE_id,similarity_score,algorithm_version,update_timestamp
+1,2,3.4,algorithm1,2025-06-30

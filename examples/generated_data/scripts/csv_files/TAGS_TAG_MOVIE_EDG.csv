@@ -1,0 +1,3 @@
+src_TAG_id,dst_MOVIE_id,tag_timestamp,user_confidence,public_visibility
+1,1,2025-06-15,5.0,true
+2,2,2025-06-13,4.9,false

@@ -1,9 +1,10 @@
 import json
 import argparse
-from app.core.schema.schema_graph import SchemaGraph, Node, Edge
-from typing import Dict, List
-from app.impl.oracle_sql.schema.schema_parser import OracleSchemaParser
 from pathlib import Path
+from typing import Dict, List
+
+from app.core.schema.schema_graph import SchemaGraph, Node, Edge
+from app.impl.oracle_sql.schema.schema_parser import OracleSchemaParser
 
 
 
@@ -58,8 +59,20 @@ if __name__ == "__main__":
   
   # Get json file from arguments
   parser = argparse.ArgumentParser()
-  parser.add_argument('file', help='Graph schema in json format')
-  parser.add_argument('graph_name', help='Graph name')
+  parser.add_argument('--file', help='Graph schema in json format')
+  parser.add_argument('--graph_name', help='Graph name')
+  parser.add_argument(
+      '--csv_dir',
+      help='Directory containing CSV files for vertex and edge loads'
+  )
+  parser.add_argument(
+      '--control_dir',
+      help='Directory to write generated SQL*Loader control files'
+  )
+  parser.add_argument(
+      '--credentials',
+      help='<user>/<password>@<connect_string> for sqlldr commands'
+  )
   args = parser.parse_args()
   definition = read_json_from_file(INPUT_PATH + args.file+ ".json" )
   db_id = args.graph_name
@@ -78,4 +91,18 @@ if __name__ == "__main__":
 
   #TODO: Use logger
   print(f"Schema SQL file saved to: {saved_path}")
+
+  control_dir = Path(args.control_dir)
+  csv_dir = Path(args.csv_dir)
+  load_instructions = oracle_schema_parser.generate_sqlldr_control_files(
+      schema_graph=schema_graph,
+      csv_dir=csv_dir,
+      control_dir=control_dir,
+      credentials=args.credentials,
+  )
+
+  print(f"Generated {len(load_instructions)} SQL*Loader control files in {control_dir}")
+  for info in load_instructions:
+    print(f"  Control file: {info['control_file']}")
+    print(f"    Command: {info['command']}")
   

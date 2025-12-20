@@ -69,7 +69,7 @@ class LlmClient:
 
         # deal with output and return
         output = self.tokenizer.decode(
-            output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True
+            output[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )
 
         return output

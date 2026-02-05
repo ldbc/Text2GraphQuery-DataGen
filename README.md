@@ -85,6 +85,13 @@ echo "export OPENAI_API_KEY='YOUR_OPENAI_API_KEY'" >> ~/.bashrc
 source ~/.bashrc
 echo $OPENAI_API_KEY
 ```
+2. Set BASE_URL via environment variables
+```
+# replace OPENAI_BASE_URL with your OPENAI_BASE_URL
+echo "export OPENAI_BASE_URL='YOUR_OPENAI_BASE_URL'" >> ~/.bashrc
+source ~/.bashrc
+echo OPENAI_BASE_URL
+```
 ##### Change The Platform 
    
 you can change the platform by setting the evenvironment variables

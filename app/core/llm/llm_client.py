@@ -18,7 +18,7 @@ class LlmClient:
         self.tokenizer = None
 
         platform_form_env = os.getenv("LLM_PLATFORM")
-        if platform is not None:
+        if platform != "":
             self.platform = platform
         elif platform_form_env is not None:
             self.platform = platform_form_env

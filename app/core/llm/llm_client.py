@@ -81,8 +81,7 @@ class LlmClient:
             response = openai_client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0,
-                max_tokens=200
+                temperature=0
             )
             return response.choices[0].message.content
         except openai.RateLimitError as e:

@@ -77,7 +77,7 @@ class LlmClient:
 
     def call_with_messages_online_for_openai(self, messages):
         try:
-            openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"))
             response = openai_client.chat.completions.create(
                 model=self.model,
                 messages=messages,

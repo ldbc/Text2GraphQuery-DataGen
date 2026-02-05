@@ -86,7 +86,10 @@ class LlmClient:
             )
             return response.choices[0].message.content
         except openai.RateLimitError as e:
-            print("A 429 status code was received; we should back off a bit.")
+            print("there are too many request,ready to retry in 1 second")
+            time.sleep(1)
+            print("begin to retry")
+            return self.call_with_messages_online_for_openai(messages)
         except OpenAIError as e:
             print("Failed!", messages[1]["content"])
 

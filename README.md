@@ -63,43 +63,47 @@ poetry shell
 
 ### LLM Setup
 
+We offer two platforms for your LLM needs: DashScope (by Alibaba Cloud) and OpenAI.
 #### Remote LLM Setup
+##### Remote LLM Setup For DashScope (recommended)
 
-To run Awesome-Text2GQL funtions based on remote LLMs，apply API-KEY before you start.
-1. Choose the platform
+1. Set API-KEY via environment variables 
+   
+    It is based on the Qwen Inference Service served by Aliyun,you can refer to [Aliyun](https://help.aliyun.com/zh/dashscope/developer-reference/acquisition-and-configuration-of-api-key?spm=a2c4g.11186623.0.0.4e202a9dXlz5vH#1e6311202fthe) to apply the API-KEY.
 
-    Awesome-Text2GQL supposed dashscope(default) and openai for LLMs, you can change this with
+```
+# replace YOUR_DASHSCOPE_API_KEY with your API-KEY
+echo "export DASHSCOPE_API_KEY='YOUR_DASHSCOPE_API_KEY'" >> ~/.bashrc
+source ~/.bashrc
+echo $DASHSCOPE_API_KEY
+```
+##### Remote LLM Setup For OpenAI
+1. Set API-KEY via environment variables
+```
+# replace OPENAI_API_KEY with your API-KEY
+echo "export OPENAI_API_KEY='YOUR_OPENAI_API_KEY'" >> ~/.bashrc
+source ~/.bashrc
+echo $OPENAI_API_KEY
+```
+##### Change The Platform 
+   
+you can change the platform by setting the evenvironment variables
 
-    ```
+```
     # use openai platform for LLM
+    # echo "export LLM_PLATFORM='dashscope'" >> ~/.bashrc
     echo "export LLM_PLATFORM='openai'" >> ~/.bashrc
     source ~/.bashrc
     echo LLM_PLATFORM
-    ```
-
-    you also can use another platform when init the Client
-
-    ```python
-    from app.core.llm.llm_client import LlmClient
+```
+or set the platform and model when instantiating an object of the LlmClient
+```python
+from app.core.llm.llm_client import LlmClient
     
-    llm_client_for_dashscope = LlmClient(model="qwen-plus-0723",platform = "dashscope")
-    llm_client_for_openai = LlmClient(model="gpt-4",platform = "openai")
-    ```
-
-2. Apply API-KEY
-
-    dashscope is based on the Qwen Inference Service served by Aliyun, you can refer to [Aliyun](https://help.aliyun.com/zh/dashscope/developer-reference/acquisition-and-configuration-of-api-key?spm=a2c4g.11186623.0.0.4e202a9dXlz5vH#1e6311202fthe) to apply the API-KEY.
-
-3. Set API-KEY via environment variables (recommended)
-
-    ```
-    # replace YOUR_DASHSCOPE_API_KEY with your API-KEY
-    echo "export DASHSCOPE_API_KEY='YOUR_DASHSCOPE_API_KEY'" >> ~/.bashrc
-    echo "export OPENAI_API_KEY='YOUR_OPENAI_API_KEY'" >> ~/.bashrc
-    source ~/.bashrc
-    echo $DASHSCOPE_API_KEY
-    ```
-
+llm_client_for_dashscope = LlmClient(model="qwen-plus-0723",platform = "dashscope")
+llm_client_for_openai = LlmClient(model="gpt-4",platform = "openai")
+```
+   
 #### Local LLM Setup
 
 Awesome-Text2GQL's local LLM client is based on transformers library, use model id from HuggingFace model hub if you can access HuggingFace or use the related local file path where the LLM model is. Add model_path when initializing llm client if you want to use local LLM instead of remote LLM.

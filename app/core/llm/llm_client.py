@@ -1,6 +1,7 @@
 import os
 from http import HTTPStatus
 import random
+import time
 
 import openai
 from dashscope import Generation
@@ -104,6 +105,7 @@ class LlmClient:
             return content
         else:
             if response.code == 429:  # Requests rate limit exceeded
+                time.sleep(1)
                 return self.call_with_messages_online_for_dashscope(messages)
             else:
                 print(

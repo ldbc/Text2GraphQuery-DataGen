@@ -110,6 +110,9 @@ class LlmClient:
                     + f", error code: {response.code}, error message: too many request,ready to retry in 1 second "
                 )
                 time.sleep(1)
+                print(
+                    f"Request id: {response.request_id}, begin to retry"
+                )
                 return self.call_with_messages_online_for_dashscope(messages)
             else:
                 print(

@@ -159,6 +159,36 @@ The template-based generation process works as follows:
 3. Uses LLM to translate the filled queries into natural language questions
 4. Validates the generated pairs and saves them to the output directory
 
+#### Convert TuGraph-DB Schema to Google Spanner
+
+`python ./examples/tugraph_to_spanner.py`
+
+This example demonstrates how to convert a TuGraph-DB graph schema to Google Spanner compatible format. It generates:
+
+- **Spanner_SchemaDDL_*.sql**: Complete DDL statements including:
+  - Vertex table definitions with primary keys
+  - Edge table definitions with foreign key constraints
+  - Spanner Property Graph definitions
+  
+- **spanner_import_config.json**: Data import configuration for loading CSV data into Spanner
+
+The conversion handles:
+- Schema transformation from TuGraph format to Spanner DDL
+- Type mapping (INT64, FLOAT64, STRING, BOOL, DATE)
+- Graph relationships and constraints
+- Property definitions for both vertices and edges
+
+**Usage:**
+```python
+from examples.tugraph_to_spanner import convert_tugraph_to_spanner
+
+# Convert TuGraph schema to Spanner format
+convert_tugraph_to_spanner(
+    input_json_path="examples/generated_schemas/example_schema.json",
+    output_dir="examples/Spanner_Instance"
+)
+```
+
 After all, run:
 
 `python ./examples/generate_corpus_by_template.py`

@@ -23,9 +23,9 @@ def main():
         - llm_client (LlmClient): The language model client used for schema generation 
           (e.g, "qwen3-coder-plus-2025-07-22").
         """
-        domain = "moive"
-        subdomain = "movielens"
-        complexity_level = 3
+        domain = "music"
+        subdomain = "pop"
+        complexity_level = 2
         llm_client = LlmClient(model="qwen3-coder-plus-2025-07-22")
 
         schema_gen = SchemaGenerator(llm_client=llm_client)

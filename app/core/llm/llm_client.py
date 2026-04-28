@@ -3,6 +3,7 @@ import os
 import random
 import time
 
+import dashscope
 from dashscope import Generation
 import openai
 from openai import OpenAI, OpenAIError
@@ -93,6 +94,7 @@ class LlmClient:
             print("Failed!", messages[1]["content"])
 
     def call_with_messages_online_for_dashscope(self, messages):
+        dashscope.base_http_api_url = "https://dashscope-intl.aliyuncs.com/api/v1"
         response = Generation.call(
             model=self.model,
             messages=messages,

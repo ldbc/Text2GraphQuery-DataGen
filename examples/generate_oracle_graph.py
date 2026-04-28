@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
+from app.core.generator.schema_generator import SchemaGenerator
+from app.core.llm.llm_client import LlmClient
 from app.core.schema.schema_graph import Edge, Node, SchemaGraph
 from app.impl.oracle_sql.schema.schema_parser import OracleSchemaParser
 
@@ -59,9 +61,9 @@ if __name__ == "__main__":
 
     # Get json file from arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--file", help="Graph schema in json format under examples/generated_schemas/"
-    )
+    # parser.add_argument(
+    #     "--file", help="Graph schema in json format under examples/generated_schemas/"
+    # )
     parser.add_argument("--graph_name", help="Graph name")
     parser.add_argument("--domain")
     parser.add_argument("--subdomain")
@@ -75,22 +77,29 @@ if __name__ == "__main__":
         "--credentials", help="<user>/<password>@<connect_string> for sqlldr commands"
     )
     args = parser.parse_args()
-    json_file = read_json_from_file(INPUT_PATH + args.file + ".json")
+    # json_file = read_json_from_file(INPUT_PATH + args.file + ".json")
 
-    if isinstance(json_file, dict):
-        definition = json_file.get("schema")
-    else:
-        definition = json_file
+    # if isinstance(json_file, dict):
+    #    definition = json_file.get('schema')
+    # else:
+    #    definition = json_file
+
+    llm_client = LlmClient(model="qwen3-coder-plus-2025-07-22")
+
+    schema_gen = SchemaGenerator(llm_client=llm_client)
+
+    domain = args.domain
+    subdomain = args.subdomain
+    complexity_level = 3
+    schema_graph = schema_gen.generate_schema(domain, subdomain, complexity_level)
 
     db_id = args.graph_name
-    schema_graph = build_schema_graph(db_id, definition)
+    # schema_graph = build_schema_graph(db_id, definition)
 
     # Create schema parser
     oracle_schema_parser = OracleSchemaParser(db_id, "examples")
     output_dir = Path("examples/generated_schemas/")
 
-    domain = args.domain
-    subdomain = args.subdomain
     # serialize schema graph to Oracle format SQL file
     saved_path = oracle_schema_parser.save_schema_to_file(
         output_dir, schema_graph, domain, subdomain

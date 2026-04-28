@@ -26,10 +26,10 @@ class DataGenerator:
         # If no code block found, return entire response as fallback (assuming it's all code)
         return response.strip()
 
-    def generate_data_script(self, schema_json) -> str:
+    def generate_data_script(self, schema_sql) -> str:
         """Call LLM to generate data generation Python script."""
 
-        data.INSTRUCTION_TEMPLATE = data.INSTRUCTION_TEMPLATE.format(schema_json=schema_json)
+        data.INSTRUCTION_TEMPLATE = data.INSTRUCTION_TEMPLATE.format(schema_sql=schema_sql)
         message = [
             {"role": "system", "content": data.PROMPT},
             {"role": "user", "content": data.INSTRUCTION_TEMPLATE},
@@ -85,7 +85,9 @@ class DataGenerator:
     ) -> Tuple[str, List[Path]]:
         """Generate, save, and execute data generation script with automatic retry/fix logic."""
         with open(schema_file, encoding="utf-8") as f:
-            schema_json = json.dumps(json.load(f), ensure_ascii=False)
+            schema_sql = f.read()
+            print(f"Schema SQL: {schema_sql}")
+            # schema_json = json.dumps(json.load(f), ensure_ascii=False)
 
         output_base = Path(output_base)
 
@@ -114,7 +116,7 @@ class DataGenerator:
                 code = self._extract_python_code(response)
             else:
                 print("--- Attempt 1: Generating initial script ---")
-                code = self.generate_data_script(schema_json)
+                code = self.generate_data_script(schema_sql)
 
             if not code:
                 last_error = "LLM returned empty code."

@@ -10,8 +10,8 @@ The script must produce high-quality, realistic data that simulates complex real
 
 INSTRUCTION_TEMPLATE = """
 Graph Schema:
-```sql
-{schema_sql}
+```json
+{schema_json}
 ```
 As a top-tier Python engineer, create a professional, high-quality Python script to generate realistic test data based on the provided graph schema.
 

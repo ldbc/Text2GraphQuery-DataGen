@@ -81,11 +81,15 @@ class DataGenerator:
         return code
 
     def generate_data(
-        self, schema_file, output_base: str = "examples/generated_data", max_retries: int = 2
+        self, schema_file, schema_type,
+        output_base: str = "examples/generated_data", max_retries: int = 2
     ) -> Tuple[str, List[Path]]:
         """Generate, save, and execute data generation script with automatic retry/fix logic."""
         with open(schema_file, encoding="utf-8") as f:
-            schema_json = json.dumps(json.load(f), ensure_ascii=False)
+            if schema_type == 'JSON':
+                schema_json = json.dumps(json.load(f), ensure_ascii=False)
+            else:
+                schema_json = f.read()
 
         output_base = Path(output_base)
 

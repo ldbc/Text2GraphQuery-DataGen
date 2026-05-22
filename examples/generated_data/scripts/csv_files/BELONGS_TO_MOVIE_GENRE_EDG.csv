@@ -1,0 +1,3 @@
+src_MOVIE_id,dst_GENRE_id,primary_classification,strength_score
+1,1,true,5.0
+2,2,false,4.9

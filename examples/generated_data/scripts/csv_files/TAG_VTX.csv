@@ -1,0 +1,4 @@
+TAG_id,text_content,timestamp,relevance_score
+1,text1,2024-12-01,1.5
+2,text2,2024-12-02,2.5
+3,text3,2024-12-03,3.5
